@@ -1,0 +1,6 @@
+services:
+  tomcat:
+    restart: always
+
+  mongo:
+    restart: always

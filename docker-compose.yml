@@ -5,28 +5,32 @@ services:
       - mongo
     image: guilhemsempere/gigwa:2.3-RELEASE
     ports:
-      - 8080:8080 # You may amend the external port only (left hand side). By default, webapp URL will be http://host.ip:8080/gigwa
+      - "${PORT}:8080" # You may amend the external port only (left hand side). By default, webapp URL will be http://host.ip:8080/gigwa
     restart: always
     environment:
-      MONGO_IP: host.ip # Set your host machine IP here
-      MONGO_PORT: 59393 # Must match mongo container external port
+      MONGO_IP: mongo
+      MONGO_PORT: 27017 # Must match mongo container port
       MONGO_INITDB_ROOT_USERNAME: yourMongoRootUser
       MONGO_INITDB_ROOT_PASSWORD: yourMongoRootPassword
       HOST_LOCALE: "${LANG}"
+    healthcheck:
+      test: wget -q --spider http://localhost:8080/gigwa || exit 1
     volumes:
       - type: volume
         source: gigwa
         target: /usr/local/tomcat/config
 
   mongo:
-    image: mongo:4.2.3
+    image: mongo:4.2.12
     restart: always
     command: --profile 0 --slowms 60000 --storageEngine wiredTiger --wiredTigerCollectionBlockCompressor=zlib --directoryperdb --quiet
-    ports:
-      - 59393:27017 # You may amend the external port only (left hand side), which must match the above MONGO_PORT
+    expose:
+      - 27017 # default mongodb port
     environment:
       MONGO_INITDB_ROOT_USERNAME: yourMongoRootUser
       MONGO_INITDB_ROOT_PASSWORD: yourMongoRootPassword
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongo localhost:27017/test --quiet
     volumes:
       - type: volume
         source: mongo
